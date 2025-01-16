@@ -23,6 +23,7 @@ export default function HelloWorldApp() {
   const [params, setParams] = useState<{ key: string; value: string }[]>([
     { key: "", value: "" },
   ]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,8 +41,13 @@ export default function HelloWorldApp() {
     setParams([...params, { key: "", value: "" }]);
   };
 
+  const logMessage = (message: string) => {
+    setLogs((prevLogs) => [...prevLogs, message]);
+  };
+
   const callFunction = async () => {
     try {
+      logMessage("Preparing arguments...");
       const args = params.reduce((acc, param) => {
         if (param.key && param.value) {
           acc[param.key] = isNaN(Number(param.value)) ? param.value : Number(param.value);
@@ -49,13 +55,23 @@ export default function HelloWorldApp() {
         return acc;
       }, {} as Record<string, any>);
 
+      logMessage(`Arguments prepared: ${JSON.stringify(args)}`);
+      logMessage(`Calling function: ${functionName}`);
+
       const { data, error } = await supabase.rpc(functionName, args);
-      if (error) throw error;
+
+      if (error) {
+        logMessage(`Error occurred: ${error.message}`);
+        throw error;
+      }
+
+      logMessage("Function executed successfully.");
       setResult(data);
       setError(null);
     } catch (err) {
       setError((err as Error).message);
       setResult(null);
+      logMessage(`Error: ${(err as Error).message}`);
     }
   };
 
@@ -155,6 +171,18 @@ export default function HelloWorldApp() {
       >
         Execute Function
       </button>
+
+      {/* Logs */}
+      <div className="w-full max-w-md mt-6">
+        <h2 className="text-lg font-medium mb-4">Logs</h2>
+        <div className="bg-gray-100 p-4 rounded shadow overflow-auto h-64">
+          {logs.map((log, index) => (
+            <p key={index} className="text-sm text-gray-800">
+              {log}
+            </p>
+          ))}
+        </div>
+      </div>
 
       {/* Results or Error */}
       {error && <p className="text-red-500 mt-4">Error: {error}</p>}
