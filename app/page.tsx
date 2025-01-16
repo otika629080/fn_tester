@@ -1,48 +1,60 @@
-"use client"
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+"use client";
+import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 // Supabase client setup
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey: string = process.env.NEXT_PUBLIC_SUPABASE_KEY!;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase URL and Key must be provided.');
+  throw new Error("Supabase URL and Key must be provided.");
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const VALID_USERNAME = 'nag-tester';
-const VALID_PASSWORD = 'qC(gUG4RRk%a';
+const VALID_USERNAME = "nag-tester";
+const VALID_PASSWORD = "qC(gUG4RRk%a";
 
 export default function HelloWorldApp() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [functionName, setFunctionName] = useState<string>('');
-  const [params, setParams] = useState<string[]>(['']);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [functionName, setFunctionName] = useState<string>("");
+  const [params, setParams] = useState<{ key: string; value: string }[]>([
+    { key: "", value: "" },
+  ]);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleParamChange = (index: number, value: string) => {
+  const handleParamChange = (
+    index: number,
+    field: "key" | "value",
+    value: string
+  ) => {
     const newParams = [...params];
-    newParams[index] = value;
+    newParams[index][field] = value;
     setParams(newParams);
   };
 
   const addParamInput = () => {
-    setParams([...params, '']);
+    setParams([...params, { key: "", value: "" }]);
   };
 
   const callFunction = async () => {
     try {
-      const args = params.filter((param) => param.trim() !== '');
-      const { data, error } = await supabase.rpc(functionName, args.length > 0 ? args : undefined);
+      const args = params.reduce((acc, param) => {
+        if (param.key && param.value) {
+          acc[param.key] = isNaN(Number(param.value)) ? param.value : Number(param.value);
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      const { data, error } = await supabase.rpc(functionName, args);
       if (error) throw error;
       setResult(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
       setResult(null);
     }
   };
@@ -51,7 +63,7 @@ export default function HelloWorldApp() {
     if (username === VALID_USERNAME && password === VALID_PASSWORD) {
       setIsAuthenticated(true);
     } else {
-      alert('Invalid username or password.');
+      alert("Invalid username or password.");
     }
   };
 
@@ -111,13 +123,20 @@ export default function HelloWorldApp() {
       <div className="w-full max-w-md mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">Parameters</label>
         {params.map((param, index) => (
-          <div key={index} className="flex items-center mb-2">
+          <div key={index} className="flex items-center mb-2 gap-2">
             <input
               type="text"
-              className="flex-grow px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value={param}
-              onChange={(e) => handleParamChange(index, e.target.value)}
-              placeholder={`Param ${index + 1}`}
+              className="w-1/3 px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Key"
+              value={param.key}
+              onChange={(e) => handleParamChange(index, "key", e.target.value)}
+            />
+            <input
+              type="text"
+              className="w-2/3 px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Value"
+              value={param.value}
+              onChange={(e) => handleParamChange(index, "value", e.target.value)}
             />
           </div>
         ))}
@@ -138,9 +157,7 @@ export default function HelloWorldApp() {
       </button>
 
       {/* Results or Error */}
-      {error && (
-        <p className="text-red-500 mt-4">Error: {error}</p>
-      )}
+      {error && <p className="text-red-500 mt-4">Error: {error}</p>}
       {result && (
         <pre className="bg-gray-100 text-sm p-4 rounded w-full mt-4 overflow-auto">
           {JSON.stringify(result, null, 2)}
