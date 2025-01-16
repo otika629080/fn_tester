@@ -1,0 +1,50 @@
+"use client"
+import { useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase client setup
+const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey: string = process.env.NEXT_PUBLIC_SUPABASE_KEY!;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase URL and Key must be provided.');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default function HelloWorldApp() {
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function callHelloWorld() {
+    try {
+      const { data, error } = await supabase.rpc('hello_world');
+      if (error) throw error;
+      setResult(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      setResult(null);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4 flex flex-col items-center">
+      <h1 className="text-3xl font-bold text-center mb-8">Hello World Function</h1>
+      <button
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+        onClick={callHelloWorld}
+      >
+        Execute Hello World
+      </button>
+      {error && (
+        <p className="text-red-500 mt-4">Error: {error}</p>
+      )}
+      {result && (
+        <pre className="bg-gray-100 text-sm p-4 rounded w-full mt-4 overflow-auto">
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}

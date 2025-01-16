@@ -1,101 +1,151 @@
-import Image from "next/image";
+"use client"
+import { useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+// Supabase client setup
+const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey: string = process.env.NEXT_PUBLIC_SUPABASE_KEY!;
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase URL and Key must be provided.');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const VALID_USERNAME = 'nag-tester';
+const VALID_PASSWORD = 'qC(gUG4RRk%a';
+
+export default function HelloWorldApp() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [functionName, setFunctionName] = useState<string>('');
+  const [params, setParams] = useState<string[]>(['']);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleParamChange = (index: number, value: string) => {
+    const newParams = [...params];
+    newParams[index] = value;
+    setParams(newParams);
+  };
+
+  const addParamInput = () => {
+    setParams([...params, '']);
+  };
+
+  const callFunction = async () => {
+    try {
+      const args = params.filter((param) => param.trim() !== '');
+      const { data, error } = await supabase.rpc(functionName, args.length > 0 ? args : undefined);
+      if (error) throw error;
+      setResult(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      setResult(null);
+    }
+  };
+
+  const handleLogin = () => {
+    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+      setIsAuthenticated(true);
+    } else {
+      alert('Invalid username or password.');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white shadow rounded-lg p-8 w-96">
+          <h2 className="text-2xl font-bold text-center mb-4">Login</h2>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <input
+              type="password"
+              className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+            />
+          </div>
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded w-full"
+            onClick={handleLogin}
           >
-            Read our docs
-          </a>
+            Login
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4 flex flex-col items-center font-sans">
+      <h1 className="text-3xl font-bold text-center mb-8">Supabase Function Executor</h1>
+
+      {/* Function Name Input */}
+      <div className="w-full max-w-md mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Function Name</label>
+        <input
+          type="text"
+          className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          value={functionName}
+          onChange={(e) => setFunctionName(e.target.value)}
+          placeholder="Enter function name"
+        />
+      </div>
+
+      {/* Params Inputs */}
+      <div className="w-full max-w-md mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Parameters</label>
+        {params.map((param, index) => (
+          <div key={index} className="flex items-center mb-2">
+            <input
+              type="text"
+              className="flex-grow px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={param}
+              onChange={(e) => handleParamChange(index, e.target.value)}
+              placeholder={`Param ${index + 1}`}
+            />
+          </div>
+        ))}
+        <button
+          className="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-4 rounded"
+          onClick={addParamInput}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          + Add Param
+        </button>
+      </div>
+
+      {/* Execute Button */}
+      <button
+        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-4"
+        onClick={callFunction}
+      >
+        Execute Function
+      </button>
+
+      {/* Results or Error */}
+      {error && (
+        <p className="text-red-500 mt-4">Error: {error}</p>
+      )}
+      {result && (
+        <pre className="bg-gray-100 text-sm p-4 rounded w-full mt-4 overflow-auto">
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      )}
     </div>
   );
 }
