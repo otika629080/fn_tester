@@ -49,22 +49,23 @@ export default function SupabaseApiTester() {
       setError(null);
       setResponse(null);
 
+      // Convert headers to the required format { [key: string]: string }
       const requestHeaders = headers.reduce((acc, header) => {
         if (header.key && header.value) {
           acc[header.key] = header.value;
         }
         return acc;
-      }, {} as Record<string, string>);
+      }, {} as { [key: string]: string });
 
-      const options: RequestInit = {
-        method,
+      const options = {
         headers: requestHeaders,
       };
 
       if (method !== "GET" && body) {
-        options.body = body;
+        (options as any).body = JSON.parse(body);
       }
 
+      // Call Supabase function
       const { data, error } = await supabase.functions.invoke(endpoint, options);
 
       if (error) {
@@ -89,32 +90,32 @@ export default function SupabaseApiTester() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white shadow rounded-lg p-8 w-96">
-          <h2 className="text-2xl font-bold text-center mb-4">Login</h2>
+          <h2 className="text-2xl font-bold text-center mb-4">ログイン</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
             <input
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder="ユーザー名を入力してください"
             />
           </div>
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">パスワード</label>
             <input
               type="password"
               className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="パスワードを入力してください"
             />
           </div>
           <button
             className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded w-full"
             onClick={handleLogin}
           >
-            Login
+            ログイン
           </button>
         </div>
       </div>
@@ -123,7 +124,7 @@ export default function SupabaseApiTester() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 flex flex-col items-center font-sans">
-      <h1 className="text-3xl font-bold text-center mb-8">Supabase API Tester</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">Supabase API テスター</h1>
 
       {/* 使い方 */}
       <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-lg p-4 mb-6 max-w-md">
@@ -138,22 +139,21 @@ export default function SupabaseApiTester() {
         </ol>
       </div>
 
-
       {/* Endpoint Input */}
       <div className="w-full max-w-md mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Endpoint</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">エンドポイント</label>
         <input
           type="text"
           className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           value={endpoint}
           onChange={(e) => setEndpoint(e.target.value)}
-          placeholder="Enter endpoint name"
+          placeholder="エンドポイント名を入力してください"
         />
       </div>
 
       {/* Method Selector */}
       <div className="w-full max-w-md mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">HTTP Method</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">HTTPメソッド</label>
         <select
           className="w-full px-3 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           value={method}
@@ -204,7 +204,7 @@ export default function SupabaseApiTester() {
             rows={4}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder='Enter request body (JSON format)'
+            placeholder="リクエストボディをJSON形式で入力してください"
           ></textarea>
         </div>
       )}
