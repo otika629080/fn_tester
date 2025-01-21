@@ -9,3 +9,7 @@ NEXT_PUBLIC_SUPABASE_URL=yourUri
 NEXT_PUBLIC_SUPABASE_KEY=yourApiKey
 ```
 6. npm run dev
+
+Edge Functionを呼び出す	my_function
+tasksテーブルのデータ取得	tasks
+カスタムエンドポイントを叩く	custom-api/get-stats
